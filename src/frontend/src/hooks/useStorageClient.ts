@@ -1,29 +1,12 @@
-import { HttpAgent } from "@icp-sdk/core/agent";
-import { useEffect, useState } from "react";
-import { loadConfig } from "../config";
-import { StorageClient } from "../utils/StorageClient";
+/**
+ * Storage client hook — returns null until an object-storage integration
+ * is configured. The calling code already guards with `if (photoFile && storageClient)`.
+ */
+export interface StorageClient {
+  putFile(bytes: Uint8Array): Promise<{ hash: string }>;
+  getDirectURL(hash: string): Promise<string>;
+}
 
-export function useStorageClient() {
-  const [client, setClient] = useState<StorageClient | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    loadConfig().then((config) => {
-      if (!mounted) return;
-      const agent = new HttpAgent({ host: config.backend_host });
-      const sc = new StorageClient(
-        config.bucket_name,
-        config.storage_gateway_url,
-        config.backend_canister_id,
-        config.project_id,
-        agent,
-      );
-      setClient(sc);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return client;
+export function useStorageClient(): StorageClient | null {
+  return null;
 }

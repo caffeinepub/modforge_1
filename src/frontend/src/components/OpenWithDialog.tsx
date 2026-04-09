@@ -7,7 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Gamepad2, Library, MonitorPlay, Smartphone, Tv2 } from "lucide-react";
+import {
+  Gamepad2,
+  Library,
+  MonitorPlay,
+  Smartphone,
+  Tablet,
+  Tv2,
+} from "lucide-react";
 import type { UserGame } from "../hooks/useQueries";
 
 interface OpenWithDialogProps {
@@ -26,14 +33,39 @@ const platformConfig: Record<
     color: "bg-blue-500/15 text-blue-400 border-blue-500/30",
     icon: <Smartphone className="w-3 h-3" />,
   },
+  android: {
+    label: "Android",
+    color: "bg-lime-500/15 text-lime-400 border-lime-500/30",
+    icon: <Smartphone className="w-3 h-3" />,
+  },
+  ios: {
+    label: "iOS",
+    color: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    icon: <Tablet className="w-3 h-3" />,
+  },
   pc: {
     label: "PC",
-    color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    color: "bg-slate-400/15 text-slate-400 border-slate-400/30",
     icon: <MonitorPlay className="w-3 h-3" />,
   },
   console: {
     label: "Console",
-    color: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    color: "bg-violet-500/15 text-violet-400 border-violet-500/30",
+    icon: <Tv2 className="w-3 h-3" />,
+  },
+  xbox: {
+    label: "Xbox",
+    color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    icon: <Tv2 className="w-3 h-3" />,
+  },
+  playstation: {
+    label: "PlayStation",
+    color: "bg-blue-600/15 text-blue-400 border-blue-600/30",
+    icon: <Tv2 className="w-3 h-3" />,
+  },
+  switch: {
+    label: "Switch",
+    color: "bg-red-500/15 text-red-400 border-red-500/30",
     icon: <Tv2 className="w-3 h-3" />,
   },
   other: {

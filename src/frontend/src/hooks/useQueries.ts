@@ -1,21 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Game,
+  GameId,
   ModId,
   ModInput,
   ModUpdate,
   Tag,
+  UserGame,
   UserProfile,
 } from "../backend";
 import { useActor } from "./useActor";
 
-export type GameId = bigint;
-export interface UserGame {
-  id: GameId;
-  name: string;
-  platform: string;
-  addedAt: bigint;
-}
+// Re-export backend types so pages can import from this module
+export type { GameId, UserGame } from "../backend";
 
 export function usePublicMods() {
   const { actor, isFetching } = useActor();
@@ -131,7 +128,7 @@ export function useUserGames() {
     queryKey: ["userGames"],
     queryFn: async () => {
       if (!actor) return [];
-      return (actor as any).listUserGames() as Promise<UserGame[]>;
+      return actor.listUserGames() as Promise<UserGame[]>;
     },
     enabled: !!actor && !isFetching,
   });
@@ -146,7 +143,7 @@ export function useAddUserGame() {
       platform,
     }: { name: string; platform: string }) => {
       if (!actor) throw new Error("Not authenticated");
-      return (actor as any).addUserGame(name, platform) as Promise<GameId>;
+      return actor.addUserGame(name, platform) as Promise<GameId>;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["userGames"] });
@@ -160,7 +157,7 @@ export function useRemoveUserGame() {
   return useMutation({
     mutationFn: async (gameId: bigint) => {
       if (!actor) throw new Error("Not authenticated");
-      return (actor as any).removeUserGame(gameId) as Promise<void>;
+      return actor.removeUserGame(gameId) as Promise<void>;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["userGames"] });
@@ -239,5 +236,109 @@ export function useSaveProfile() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["userProfile"] });
     },
+  });
+}
+
+// ─── Ratings ────────────────────────────────────────────────────────────────
+
+export function useModRatings(modId: string | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["modRatings", modId],
+    queryFn: async () => {
+      if (!actor || !modId) return [];
+      return actor.getRatingsForMod(modId);
+    },
+    enabled: !!actor && !isFetching && !!modId,
+  });
+}
+
+export function useModAverageRating(modId: string | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["modAverageRating", modId],
+    queryFn: async () => {
+      if (!actor || !modId) return 0;
+      return actor.getAverageRating(modId);
+    },
+    enabled: !!actor && !isFetching && !!modId,
+  });
+}
+
+export function useSubmitRating() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ modId, stars }: { modId: string; stars: number }) => {
+      if (!actor) throw new Error("Not authenticated");
+      const result = await actor.submitRating(modId, BigInt(stars));
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: (_data, { modId }) => {
+      qc.invalidateQueries({ queryKey: ["modRatings", modId] });
+      qc.invalidateQueries({ queryKey: ["modAverageRating", modId] });
+    },
+  });
+}
+
+// ─── Comments ────────────────────────────────────────────────────────────────
+
+export function useModComments(modId: string | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["modComments", modId],
+    queryFn: async () => {
+      if (!actor || !modId) return [];
+      return actor.getCommentsForMod(modId);
+    },
+    enabled: !!actor && !isFetching && !!modId,
+  });
+}
+
+export function useSubmitComment() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ modId, text }: { modId: string; text: string }) => {
+      if (!actor) throw new Error("Not authenticated");
+      const result = await actor.submitComment(modId, text);
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: (_data, { modId }) => {
+      qc.invalidateQueries({ queryKey: ["modComments", modId] });
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      commentId,
+      modId: _modId,
+    }: { commentId: string; modId: string }) => {
+      if (!actor) throw new Error("Not authenticated");
+      const result = await actor.deleteComment(commentId);
+      if (result.__kind__ === "err") throw new Error(result.err);
+      return result;
+    },
+    onSuccess: (_data, { modId }) => {
+      qc.invalidateQueries({ queryKey: ["modComments", modId] });
+    },
+  });
+}
+
+export function useModAttachments(modId: ModId | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["modAttachments", modId?.toString()],
+    queryFn: async () => {
+      if (!actor || modId === null) return [];
+      return actor.getModAttachments(modId);
+    },
+    enabled: !!actor && !isFetching && modId !== null,
   });
 }

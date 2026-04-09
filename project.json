@@ -1,0 +1,27 @@
+{
+  "overview": "ModForge is a full-featured mod creation, management, and sharing platform for any open world game — mobile (Minecraft PE), PC, and console (Xbox, PlayStation, Nintendo Switch). Users build mods via a Config Builder, Script Editor, or file upload, with optional media for characters, dialogues, and skits. Features include a My Games Library, Open With flow, platform/system tagging and filtering, character cards, culture/group system, and full console browser compatibility.",
+  "features": [
+    "Mod creation via Config Builder, Script Editor, or file upload",
+    "Character/NPC profiles with optional photos, roles, abilities, and backstory",
+    "Culture/group system — define groups with names and languages, assign NPCs",
+    "My Games Library — add owned games (mobile, PC, console) and tag mods to them",
+    "Open With dialog — after download, select which game to apply the mod to",
+    "Platform/system tagging and filtering — Xbox, PlayStation, PC, Switch, Android, iOS",
+    "Public mod library with search and system/game filters",
+    "Mod toggle on/off from any device including consoles via browser (Edge on Xbox)",
+    "Responsive design for mobile, tablet, desktop, and TV screens",
+    "User profiles with character cards (optional photo, role, abilities, backstory)"
+  ],
+  "category": "gaming-tools",
+  "tags": [
+    "mods",
+    "gaming",
+    "open-world",
+    "minecraft",
+    "console",
+    "mobile",
+    "mod-builder",
+    "mod-management"
+  ],
+  "last_updated": "2026-04-08T14:23:41.840Z"
+}

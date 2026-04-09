@@ -1,0 +1,101 @@
+// Version: 1.0.0
+type Comment__473346131 =
+  {
+    author : Principal;
+    authorName : Text;
+    createdAt : Int;
+    id : Text;
+    modId : Text;
+    text : Text
+  };
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type ExternalBlob__140892883 = Blob;
+type GameId__376067367 = Nat;
+type Game__42905640 = Text;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type List__415060402<T> = List__790383201<T>;
+type List__790383201<T> =
+  {
+    var blockIndex : Nat__490723111;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__490723111
+  };
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type ModId__717109445 = Nat;
+type Mod__294076480 =
+  {
+    attachments : [ExternalBlob__140892883];
+    configJson : Text;
+    createdAt : Int;
+    description : Text;
+    game : Game__42905640;
+    id : ModId__717109445;
+    isEnabled : Bool;
+    isPublic : Bool;
+    modifiedAt : Int;
+    owner : Principal;
+    scriptText : Text;
+    tags : [Tag__973970575];
+    title : Text
+  };
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type Rating__372859385 =
+  {createdAt : Int; modId : Text; rater : Principal; stars : Nat};
+type Tag__973970575 = Text;
+type UserGame__856765504 =
+  {addedAt : Int; id : GameId__376067367; name : Text; platform : Text};
+type UserProfile__491224006 =
+  {
+    abilities : ?Text;
+    backstory : ?Text;
+    characterName : ?Text;
+    name : Text;
+    photoUrl : ?Text;
+    role : ?Text
+  };
+type UserRole__521596351 = {#admin; #guest; #user};
+actor {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, UserRole__521596351>
+    };
+  stable comments :
+    {
+      var root : Node__46230540<Text, Comment__473346131>;
+      var size : Nat__490723111
+    };
+  stable mods :
+    {
+      var root : Node__46230540<ModId__717109445, Mod__294076480>;
+      var size : Nat__490723111
+    };
+  stable var nextCommentId : Nat;
+  stable var nextGameId : Nat;
+  stable var nextModId : Nat;
+  stable ratings :
+    {
+      var root : Node__46230540<Text, Rating__372859385>;
+      var size : Nat__490723111
+    };
+  stable userGames :
+    {
+      var root :
+        Node__46230540<Principal, List__415060402<UserGame__856765504>>;
+      var size : Nat__490723111
+    };
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    }
+};

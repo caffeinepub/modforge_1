@@ -12,6 +12,7 @@ import CreateModPage from "./pages/CreateModPage";
 import EditModPage from "./pages/EditModPage";
 import ExplorePage from "./pages/ExplorePage";
 import HomePage from "./pages/HomePage";
+import ModDetailPage from "./pages/ModDetailPage";
 import WorkshopPage from "./pages/WorkshopPage";
 
 const rootRoute = createRootRoute({
@@ -61,12 +62,19 @@ const editRoute = createRoute({
   component: EditModPage,
 });
 
+const modDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/mod/$modId",
+  component: ModDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   exploreRoute,
   createRoute_,
   workshopRoute,
   editRoute,
+  modDetailRoute,
 ]);
 
 const router = createRouter({ routeTree });

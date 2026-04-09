@@ -1,0 +1,156 @@
+type _CaffeineStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _CaffeineStorageRefillInformation = record {
+                                           proposed_top_up_amount: opt nat;};
+type _CaffeineStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = 
+ record {
+   abilities: opt text;
+   backstory: opt text;
+   characterName: opt text;
+   name: text;
+   photoUrl: opt text;
+   role: opt text;
+ };
+type UserGame = 
+ record {
+   addedAt: int;
+   id: GameId;
+   name: text;
+   platform: text;
+ };
+type Tag = text;
+type Rating = 
+ record {
+   createdAt: int;
+   modId: text;
+   rater: principal;
+   stars: nat;
+ };
+type ModUpdate = 
+ record {
+   configJson: opt text;
+   description: opt text;
+   game: opt Game;
+   isPublic: opt bool;
+   scriptText: opt text;
+   tags: opt vec Tag;
+   title: opt text;
+ };
+type ModInput = 
+ record {
+   configJson: text;
+   description: text;
+   game: Game;
+   isPublic: bool;
+   scriptText: text;
+   tags: vec Tag;
+   title: text;
+ };
+type ModId = nat;
+type Mod = 
+ record {
+   attachments: vec ExternalBlob;
+   configJson: text;
+   createdAt: int;
+   description: text;
+   game: Game;
+   id: ModId;
+   isEnabled: bool;
+   isPublic: bool;
+   modifiedAt: int;
+   owner: principal;
+   scriptText: text;
+   tags: vec Tag;
+   title: text;
+ };
+type GameId = nat;
+type Game = text;
+type ExternalBlob = blob;
+type Comment = 
+ record {
+   author: principal;
+   authorName: text;
+   createdAt: int;
+   id: text;
+   modId: text;
+   "text": text;
+ };
+service : {
+  _caffeineStorageBlobIsLive: (hash: blob) -> (bool) query;
+  _caffeineStorageBlobsToDelete: () -> (vec blob) query;
+  _caffeineStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _caffeineStorageCreateCertificate: (blobHash: text) ->
+   (_CaffeineStorageCreateCertificateResult);
+  _caffeineStorageRefillCashier: (refillInformation:
+   opt _CaffeineStorageRefillInformation) -> (_CaffeineStorageRefillResult);
+  _caffeineStorageUpdateGatewayPrincipals: () -> ();
+  _initializeAccessControlWithSecret: (userSecret: text) -> ();
+  addModAttachment: (modId: ModId, "blob": ExternalBlob) -> ();
+  addUserGame: (name: text, platform: text) -> (GameId);
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  createMod: (input: ModInput) -> (ModId);
+  deleteComment: (commentId: text) -> (variant {
+                                         err: text;
+                                         ok;
+                                       });
+  deleteMod: (id: ModId) -> ();
+  getAllMods: () -> (vec Mod) query;
+  getAverageRating: (modId: text) -> (float64) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getCommentsForMod: (modId: text) -> (vec Comment) query;
+  getDownloadInfo: (modId: ModId) ->
+   (record {
+      attachments: vec ExternalBlob;
+      mod: Mod;
+    }) query;
+  getMod: (id: ModId) -> (opt Mod) query;
+  getModAttachments: (modId: ModId) -> (vec ExternalBlob) query;
+  getModStats: () ->
+   (record {
+      publicMods: nat;
+      totalGames: nat;
+      totalMods: nat;
+      totalTags: nat;
+    }) query;
+  getModsByGame: (game: Game) -> (vec Mod) query;
+  getModsByTag: (tag: Tag) -> (vec Mod) query;
+  getMyModIds: () -> (vec ModId) query;
+  getPopularGames: () -> (vec Game) query;
+  getPopularTags: () -> (vec Tag) query;
+  getRatingsForMod: (modId: text) -> (vec Rating) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  isCallerAdmin: () -> (bool) query;
+  listMyMods: () -> (vec Mod) query;
+  listPublicMods: () -> (vec Mod) query;
+  listUserGames: () -> (vec UserGame) query;
+  removeModAttachment: (_modId: ModId, _blobId: text) -> ();
+  removeUserGame: (gameId: GameId) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  searchMods: (searchTerm: text) -> (vec Mod) query;
+  submitComment: (modId: text, commentText: text) ->
+   (variant {
+      err: text;
+      ok: text;
+    });
+  submitRating: (modId: text, stars: nat) -> (variant {
+                                                err: text;
+                                                ok;
+                                              });
+  toggleModEnabled: (id: ModId) -> (bool);
+  updateMod: (id: ModId, update: ModUpdate) -> ();
+}

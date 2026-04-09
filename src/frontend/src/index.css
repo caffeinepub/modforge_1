@@ -67,6 +67,13 @@
     font-family: "Bricolage Grotesque", "Inter", sans-serif;
   }
 
+  /* Focus-visible ring for keyboard & controller navigation (Xbox Edge, PS5 browser) */
+  *:focus-visible {
+    outline: 2px solid oklch(0.82 0.12 195);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -83,6 +90,13 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: oklch(0.82 0.12 195 / 0.6);
+  }
+}
+
+/* TV/large-screen readability (1440px+) */
+@media (min-width: 1440px) {
+  html {
+    font-size: 17px;
   }
 }
 
@@ -126,5 +140,11 @@
 
   .font-mono {
     font-family: "JetBrains Mono", monospace;
+  }
+
+  /* Minimum touch target for mobile & console controller */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
   }
 }

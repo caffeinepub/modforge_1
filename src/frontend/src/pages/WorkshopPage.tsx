@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  Apple,
   Camera,
   Edit3,
   Gamepad2,
@@ -42,12 +43,12 @@ import {
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { Mod, UserProfile } from "../backend";
 import AuthGuard from "../components/AuthGuard";
 import ModCard from "../components/ModCard";
-import OpenWithDialog, { PlatformBadge } from "../components/OpenWithDialog";
+import OpenWithDialog from "../components/OpenWithDialog";
 import PhotoCapture from "../components/PhotoCapture";
 import { useActor } from "../hooks/useActor";
 import type { UserGame } from "../hooks/useQueries";
@@ -66,6 +67,73 @@ import { buildZip, downloadZip } from "../utils/zipBuilder";
 
 const labelClass = "text-xs text-muted-foreground uppercase tracking-wide";
 
+// System-specific platform config with color-coded badges
+const SYSTEM_PLATFORMS = [
+  { value: "xbox", label: "Xbox" },
+  { value: "playstation", label: "PlayStation" },
+  { value: "pc", label: "PC" },
+  { value: "switch", label: "Nintendo Switch" },
+  { value: "android", label: "Android" },
+  { value: "ios", label: "iOS" },
+  { value: "other", label: "Other" },
+] as const;
+
+type SystemPlatform = (typeof SYSTEM_PLATFORMS)[number]["value"];
+
+function SystemBadge({ platform }: { platform: string }) {
+  const key = platform.toLowerCase() as SystemPlatform;
+  const configs: Record<
+    string,
+    { label: string; className: string; icon: React.ReactNode }
+  > = {
+    xbox: {
+      label: "Xbox",
+      className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+      icon: <Tv2 className="w-3 h-3" />,
+    },
+    playstation: {
+      label: "PlayStation",
+      className: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+      icon: <Gamepad2 className="w-3 h-3" />,
+    },
+    pc: {
+      label: "PC",
+      className: "bg-secondary/80 text-muted-foreground border-border",
+      icon: <MonitorPlay className="w-3 h-3" />,
+    },
+    switch: {
+      label: "Switch",
+      className: "bg-red-500/15 text-red-400 border-red-500/30",
+      icon: <Gamepad2 className="w-3 h-3" />,
+    },
+    android: {
+      label: "Android",
+      className: "bg-lime-500/15 text-lime-400 border-lime-500/30",
+      icon: <Smartphone className="w-3 h-3" />,
+    },
+    ios: {
+      label: "iOS",
+      className: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+      icon: <Apple className="w-3 h-3" />,
+    },
+    other: {
+      label: "Other",
+      className: "bg-muted/60 text-muted-foreground border-border",
+      icon: <Gamepad2 className="w-3 h-3" />,
+    },
+  };
+
+  const cfg = configs[key] ?? configs.other;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${cfg.className}`}
+    >
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
+}
+
 function CharacterProfileCard() {
   const { data: profile, isLoading } = useUserProfile();
   const saveProfile = useSaveProfile();
@@ -77,7 +145,6 @@ function CharacterProfileCard() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Form state
   const [formName, setFormName] = useState("");
   const [formCharName, setFormCharName] = useState("");
   const [formRole, setFormRole] = useState("");
@@ -105,9 +172,7 @@ function CharacterProfileCard() {
       toast.error("Display name is required");
       return;
     }
-
     let photoUrl = profile?.photoUrl ?? "";
-
     if (photoFile && storageClient) {
       setUploadingPhoto(true);
       try {
@@ -122,7 +187,6 @@ function CharacterProfileCard() {
       }
       setUploadingPhoto(false);
     }
-
     const updated: UserProfile = {
       name: formName.trim(),
       characterName: formCharName.trim() ? formCharName.trim() : undefined,
@@ -131,7 +195,6 @@ function CharacterProfileCard() {
       backstory: formBackstory.trim() ? formBackstory.trim() : undefined,
       photoUrl: photoUrl || undefined,
     };
-
     try {
       await saveProfile.mutateAsync(updated);
       toast.success("Profile saved!");
@@ -164,20 +227,19 @@ function CharacterProfileCard() {
           data-ocid="profile.panel"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Edit Character Profile
             </h2>
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground touch-target flex items-center justify-center"
               data-ocid="profile.close_button"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Photo */}
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="w-20 h-20 border-2 border-border">
@@ -321,7 +383,6 @@ function CharacterProfileCard() {
     );
   }
 
-  // View mode
   const hasProfile =
     profile &&
     (profile.characterName ||
@@ -337,9 +398,7 @@ function CharacterProfileCard() {
       className="bg-card border border-border rounded-xl overflow-hidden"
       data-ocid="profile.card"
     >
-      {/* Header stripe */}
       <div className="h-2 gradient-primary" />
-
       <div className="p-6">
         <div className="flex items-start justify-between mb-5">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -349,7 +408,7 @@ function CharacterProfileCard() {
             variant="ghost"
             size="sm"
             onClick={startEdit}
-            className="text-xs gap-1.5 h-7 px-2 text-muted-foreground hover:text-foreground"
+            className="text-xs gap-1.5 h-8 px-2 text-muted-foreground hover:text-foreground"
             data-ocid="profile.edit_button"
           >
             <Edit3 className="w-3 h-3" /> Edit
@@ -365,7 +424,6 @@ function CharacterProfileCard() {
               )}
             </AvatarFallback>
           </Avatar>
-
           <div className="flex-1 min-w-0">
             <p className="font-bold text-lg truncate">
               {profile?.name || "Anonymous"}
@@ -390,9 +448,7 @@ function CharacterProfileCard() {
           <div className="mt-5 space-y-3 pt-4 border-t border-border">
             {profile?.abilities && (
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <Sword className="w-4 h-4 text-primary" />
-                </div>
+                <Sword className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
                     Abilities
@@ -403,9 +459,7 @@ function CharacterProfileCard() {
             )}
             {profile?.backstory && (
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <Shield className="w-4 h-4 text-muted-foreground" />
-                </div>
+                <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">
                     Backstory
@@ -504,38 +558,23 @@ function MyGamesSection() {
         />
         <Select value={platform} onValueChange={setPlatform}>
           <SelectTrigger
-            className="bg-muted/40 border-border w-36 flex-shrink-0"
+            className="bg-muted/40 border-border w-40 flex-shrink-0"
             data-ocid="games.select"
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="mobile">
-              <span className="flex items-center gap-1.5">
-                <Smartphone className="w-3 h-3" /> Mobile
-              </span>
-            </SelectItem>
-            <SelectItem value="pc">
-              <span className="flex items-center gap-1.5">
-                <MonitorPlay className="w-3 h-3" /> PC
-              </span>
-            </SelectItem>
-            <SelectItem value="console">
-              <span className="flex items-center gap-1.5">
-                <Tv2 className="w-3 h-3" /> Console
-              </span>
-            </SelectItem>
-            <SelectItem value="other">
-              <span className="flex items-center gap-1.5">
-                <Gamepad2 className="w-3 h-3" /> Other
-              </span>
-            </SelectItem>
+            {SYSTEM_PLATFORMS.map((p) => (
+              <SelectItem key={p.value} value={p.value}>
+                {p.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button
           onClick={handleAdd}
           disabled={addGame.isPending || !gameName.trim()}
-          className="gradient-primary text-white border-0 flex-shrink-0"
+          className="gradient-primary text-white border-0 flex-shrink-0 touch-target"
           data-ocid="games.primary_button"
         >
           {addGame.isPending ? (
@@ -543,7 +582,7 @@ function MyGamesSection() {
           ) : (
             <Plus className="w-4 h-4" />
           )}
-          <span className="ml-1.5">Add Game</span>
+          <span className="ml-1.5">Add</span>
         </Button>
       </div>
 
@@ -551,27 +590,31 @@ function MyGamesSection() {
       {isLoading ? (
         <div className="space-y-2" data-ocid="games.loading_state">
           {[1, 2].map((i) => (
-            <Skeleton key={i} className="h-11 bg-muted/30 rounded-lg" />
+            <Skeleton key={i} className="h-12 bg-muted/30 rounded-lg" />
           ))}
         </div>
       ) : (games || []).length === 0 ? (
         <div
-          className="text-center py-8 border border-dashed border-border rounded-lg"
+          className="text-center py-10 border border-dashed border-border rounded-lg"
           data-ocid="games.empty_state"
         >
           <Gamepad2 className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-20" />
-          <p className="text-sm text-muted-foreground">No games added yet</p>
+          <p className="text-sm text-muted-foreground">
+            No games in your library yet
+          </p>
           <p className="text-xs text-muted-foreground/60 mt-1">
-            Add games you own to use the Open With feature after downloading
-            mods
+            Add games you own to use Open With after downloading mods
           </p>
         </div>
       ) : (
-        <div className="space-y-2" data-ocid="games.list">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2"
+          data-ocid="games.list"
+        >
           {(games || []).map((g: UserGame, i: number) => (
             <div
               key={g.id.toString()}
-              className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-muted/30 border border-border group"
+              className="flex items-center justify-between gap-3 px-3 py-3 rounded-lg bg-muted/30 border border-border group hover:border-primary/30 transition-colors"
               data-ocid={`games.item.${i + 1}`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -579,12 +622,13 @@ function MyGamesSection() {
                 <span className="text-sm font-medium truncate">{g.name}</span>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <PlatformBadge platform={g.platform} />
+                <SystemBadge platform={g.platform} />
                 <button
                   type="button"
                   onClick={() => handleRemove(g.id)}
                   disabled={removeGame.isPending}
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity disabled:opacity-50"
+                  className="touch-target flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-muted-foreground hover:text-destructive transition-opacity disabled:opacity-50"
+                  aria-label={`Remove ${g.name}`}
                   data-ocid={`games.delete_button.${i + 1}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -646,7 +690,7 @@ export default function WorkshopPage() {
       try {
         configObj = JSON.parse(info.mod.configJson);
       } catch {
-        // keep empty object
+        // keep empty
       }
       const modJson = JSON.stringify(
         {
@@ -689,12 +733,12 @@ export default function WorkshopPage() {
 
   return (
     <AuthGuard message="Sign in to view your workshop">
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-10">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-10">
+        {/* Page header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
+          className="flex items-center justify-between gap-4"
         >
           <div>
             <h1 className="text-3xl font-bold uppercase tracking-tight mb-1">
@@ -706,7 +750,7 @@ export default function WorkshopPage() {
           </div>
           <Button
             asChild
-            className="gradient-primary text-white border-0 hover:opacity-90"
+            className="gradient-primary text-white border-0 hover:opacity-90 touch-target"
             data-ocid="workshop.primary_button"
           >
             <Link to="/create">
@@ -723,13 +767,19 @@ export default function WorkshopPage() {
 
         {/* Mods section */}
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-5">
-            Your Mods
-          </h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+              Your Mods
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {(myMods || []).length} mod
+              {(myMods || []).length !== 1 ? "s" : ""}
+            </span>
+          </div>
 
           {isLoading ? (
             <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
               data-ocid="workshop.loading_state"
             >
               {[...Array(3)].map((_, i) => (
@@ -757,7 +807,7 @@ export default function WorkshopPage() {
             </div>
           ) : (
             <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4"
               data-ocid="workshop.list"
             >
               {(myMods || []).map((mod, i) => (
@@ -799,14 +849,14 @@ export default function WorkshopPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel
-                className="border-border"
+                className="border-border touch-target"
                 data-ocid="workshop.cancel_button"
               >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 touch-target"
                 data-ocid="workshop.confirm_button"
               >
                 Delete

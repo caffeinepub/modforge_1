@@ -445,4 +445,122 @@ actor {
       func(m) { m.id }
     );
   };
+
+  // ── Ratings ─────────────────────────────────────────────────────────────────
+
+  public type Rating = {
+    modId : Text;
+    rater : Principal;
+    stars : Nat;
+    createdAt : Int;
+  };
+
+  // Key: modId # "#" # rater.toText() for one-per-user-per-mod
+  let ratings = Map.empty<Text, Rating>();
+
+  public shared ({ caller }) func submitRating(modId : Text, stars : Nat) : async { #ok; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only users can submit ratings");
+    };
+    if (stars < 1 or stars > 5) {
+      return #err("Invalid: Stars must be between 1 and 5");
+    };
+    let modIdNat = switch (Nat.fromText(modId)) {
+      case (null) { return #err("Invalid mod ID") };
+      case (?n) { n };
+    };
+    let _ = getModInternal(modIdNat); // traps if mod not found
+    let key = modId # "#" # caller.toText();
+    let rating : Rating = {
+      modId;
+      rater = caller;
+      stars;
+      createdAt = Time.now();
+    };
+    ratings.add(key, rating);
+    #ok;
+  };
+
+  public query func getRatingsForMod(modId : Text) : async [Rating] {
+    ratings.values().toArray().filter(func(r) { r.modId == modId });
+  };
+
+  public query func getAverageRating(modId : Text) : async Float {
+    let modRatings = ratings.values().toArray().filter(func(r) { r.modId == modId });
+    let count = modRatings.size();
+    if (count == 0) { return 0.0 };
+    let total = modRatings.foldLeft(0, func(acc : Nat, r : Rating) : Nat { acc + r.stars });
+    total.toFloat() / count.toFloat();
+  };
+
+  // ── Comments ─────────────────────────────────────────────────────────────────
+
+  public type Comment = {
+    id : Text;
+    modId : Text;
+    author : Principal;
+    authorName : Text;
+    text : Text;
+    createdAt : Int;
+  };
+
+  let comments = Map.empty<Text, Comment>();
+  var nextCommentId : Nat = 1;
+
+  public shared ({ caller }) func submitComment(modId : Text, commentText : Text) : async { #ok : Text; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only users can submit comments");
+    };
+    if (commentText.size() == 0) {
+      return #err("Invalid: Comment cannot be empty");
+    };
+    if (commentText.size() > 1000) {
+      return #err("Invalid: Comment cannot exceed 1000 characters");
+    };
+    let modIdNat = switch (Nat.fromText(modId)) {
+      case (null) { return #err("Invalid mod ID") };
+      case (?n) { n };
+    };
+    let _ = getModInternal(modIdNat); // traps if mod not found
+    let commentId = nextCommentId.toText();
+    nextCommentId += 1;
+    let authorName = switch (userProfiles.get(caller)) {
+      case (null) { "Anonymous" };
+      case (?p) { p.name };
+    };
+    let comment : Comment = {
+      id = commentId;
+      modId;
+      author = caller;
+      authorName;
+      text = commentText;
+      createdAt = Time.now();
+    };
+    comments.add(commentId, comment);
+    #ok(commentId);
+  };
+
+  public query func getCommentsForMod(modId : Text) : async [Comment] {
+    comments.values().toArray().filter(
+      func(c) { c.modId == modId }
+    ).sort(func(a : Comment, b : Comment) : Order.Order {
+      Int.compare(b.createdAt, a.createdAt)
+    });
+  };
+
+  public shared ({ caller }) func deleteComment(commentId : Text) : async { #ok; #err : Text } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #err("Unauthorized: Only users can delete comments");
+    };
+    switch (comments.get(commentId)) {
+      case (null) { return #err("Comment not found") };
+      case (?comment) {
+        if (caller != comment.author and not AccessControl.isAdmin(accessControlState, caller)) {
+          return #err("Unauthorized: Only comment author or admin can delete");
+        };
+        comments.remove(commentId);
+        #ok;
+      };
+    };
+  };
 };

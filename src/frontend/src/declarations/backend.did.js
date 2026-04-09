@@ -21,6 +21,7 @@ export const _CaffeineStorageRefillResult = IDL.Record({
 });
 export const ModId = IDL.Nat;
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const GameId = IDL.Nat;
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -59,6 +60,26 @@ export const UserProfile = IDL.Record({
   'photoUrl' : IDL.Opt(IDL.Text),
   'backstory' : IDL.Opt(IDL.Text),
   'abilities' : IDL.Opt(IDL.Text),
+});
+export const Comment = IDL.Record({
+  'id' : IDL.Text,
+  'modId' : IDL.Text,
+  'createdAt' : IDL.Int,
+  'text' : IDL.Text,
+  'authorName' : IDL.Text,
+  'author' : IDL.Principal,
+});
+export const Rating = IDL.Record({
+  'modId' : IDL.Text,
+  'createdAt' : IDL.Int,
+  'stars' : IDL.Nat,
+  'rater' : IDL.Principal,
+});
+export const UserGame = IDL.Record({
+  'id' : GameId,
+  'name' : IDL.Text,
+  'platform' : IDL.Text,
+  'addedAt' : IDL.Int,
 });
 export const ModUpdate = IDL.Record({
   'title' : IDL.Opt(IDL.Text),
@@ -99,12 +120,20 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addModAttachment' : IDL.Func([ModId, ExternalBlob], [], []),
+  'addUserGame' : IDL.Func([IDL.Text, IDL.Text], [GameId], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createMod' : IDL.Func([ModInput], [ModId], []),
+  'deleteComment' : IDL.Func(
+      [IDL.Text],
+      [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+      [],
+    ),
   'deleteMod' : IDL.Func([ModId], [], []),
   'getAllMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
+  'getAverageRating' : IDL.Func([IDL.Text], [IDL.Float64], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCommentsForMod' : IDL.Func([IDL.Text], [IDL.Vec(Comment)], ['query']),
   'getDownloadInfo' : IDL.Func(
       [ModId],
       [IDL.Record({ 'mod' : Mod, 'attachments' : IDL.Vec(ExternalBlob) })],
@@ -129,6 +158,7 @@ export const idlService = IDL.Service({
   'getMyModIds' : IDL.Func([], [IDL.Vec(ModId)], ['query']),
   'getPopularGames' : IDL.Func([], [IDL.Vec(Game)], ['query']),
   'getPopularTags' : IDL.Func([], [IDL.Vec(Tag)], ['query']),
+  'getRatingsForMod' : IDL.Func([IDL.Text], [IDL.Vec(Rating)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -137,9 +167,21 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listMyMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
   'listPublicMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
+  'listUserGames' : IDL.Func([], [IDL.Vec(UserGame)], ['query']),
   'removeModAttachment' : IDL.Func([ModId, IDL.Text], [], []),
+  'removeUserGame' : IDL.Func([GameId], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'searchMods' : IDL.Func([IDL.Text], [IDL.Vec(Mod)], ['query']),
+  'submitComment' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text })],
+      [],
+    ),
+  'submitRating' : IDL.Func(
+      [IDL.Text, IDL.Nat],
+      [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+      [],
+    ),
   'toggleModEnabled' : IDL.Func([ModId], [IDL.Bool], []),
   'updateMod' : IDL.Func([ModId, ModUpdate], [], []),
 });
@@ -160,6 +202,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ModId = IDL.Nat;
   const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const GameId = IDL.Nat;
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -198,6 +241,26 @@ export const idlFactory = ({ IDL }) => {
     'photoUrl' : IDL.Opt(IDL.Text),
     'backstory' : IDL.Opt(IDL.Text),
     'abilities' : IDL.Opt(IDL.Text),
+  });
+  const Comment = IDL.Record({
+    'id' : IDL.Text,
+    'modId' : IDL.Text,
+    'createdAt' : IDL.Int,
+    'text' : IDL.Text,
+    'authorName' : IDL.Text,
+    'author' : IDL.Principal,
+  });
+  const Rating = IDL.Record({
+    'modId' : IDL.Text,
+    'createdAt' : IDL.Int,
+    'stars' : IDL.Nat,
+    'rater' : IDL.Principal,
+  });
+  const UserGame = IDL.Record({
+    'id' : GameId,
+    'name' : IDL.Text,
+    'platform' : IDL.Text,
+    'addedAt' : IDL.Int,
   });
   const ModUpdate = IDL.Record({
     'title' : IDL.Opt(IDL.Text),
@@ -238,12 +301,20 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addModAttachment' : IDL.Func([ModId, ExternalBlob], [], []),
+    'addUserGame' : IDL.Func([IDL.Text, IDL.Text], [GameId], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createMod' : IDL.Func([ModInput], [ModId], []),
+    'deleteComment' : IDL.Func(
+        [IDL.Text],
+        [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+        [],
+      ),
     'deleteMod' : IDL.Func([ModId], [], []),
     'getAllMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
+    'getAverageRating' : IDL.Func([IDL.Text], [IDL.Float64], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCommentsForMod' : IDL.Func([IDL.Text], [IDL.Vec(Comment)], ['query']),
     'getDownloadInfo' : IDL.Func(
         [ModId],
         [IDL.Record({ 'mod' : Mod, 'attachments' : IDL.Vec(ExternalBlob) })],
@@ -268,6 +339,7 @@ export const idlFactory = ({ IDL }) => {
     'getMyModIds' : IDL.Func([], [IDL.Vec(ModId)], ['query']),
     'getPopularGames' : IDL.Func([], [IDL.Vec(Game)], ['query']),
     'getPopularTags' : IDL.Func([], [IDL.Vec(Tag)], ['query']),
+    'getRatingsForMod' : IDL.Func([IDL.Text], [IDL.Vec(Rating)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -276,9 +348,21 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listMyMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
     'listPublicMods' : IDL.Func([], [IDL.Vec(Mod)], ['query']),
+    'listUserGames' : IDL.Func([], [IDL.Vec(UserGame)], ['query']),
     'removeModAttachment' : IDL.Func([ModId, IDL.Text], [], []),
+    'removeUserGame' : IDL.Func([GameId], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'searchMods' : IDL.Func([IDL.Text], [IDL.Vec(Mod)], ['query']),
+    'submitComment' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text })],
+        [],
+      ),
+    'submitRating' : IDL.Func(
+        [IDL.Text, IDL.Nat],
+        [IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text })],
+        [],
+      ),
     'toggleModEnabled' : IDL.Func([ModId], [IDL.Bool], []),
     'updateMod' : IDL.Func([ModId, ModUpdate], [], []),
   });

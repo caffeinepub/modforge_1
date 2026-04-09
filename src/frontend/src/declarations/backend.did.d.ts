@@ -10,8 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface Comment {
+  'id' : string,
+  'modId' : string,
+  'createdAt' : bigint,
+  'text' : string,
+  'authorName' : string,
+  'author' : Principal,
+}
 export type ExternalBlob = Uint8Array;
 export type Game = string;
+export type GameId = bigint;
 export interface Mod {
   'id' : ModId,
   'title' : string,
@@ -46,7 +55,19 @@ export interface ModUpdate {
   'configJson' : [] | [string],
   'isPublic' : [] | [boolean],
 }
+export interface Rating {
+  'modId' : string,
+  'createdAt' : bigint,
+  'stars' : bigint,
+  'rater' : Principal,
+}
 export type Tag = string;
+export interface UserGame {
+  'id' : GameId,
+  'name' : string,
+  'platform' : string,
+  'addedAt' : bigint,
+}
 export interface UserProfile {
   'characterName' : [] | [string],
   'name' : string,
@@ -87,12 +108,16 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addModAttachment' : ActorMethod<[ModId, ExternalBlob], undefined>,
+  'addUserGame' : ActorMethod<[string, string], GameId>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createMod' : ActorMethod<[ModInput], ModId>,
+  'deleteComment' : ActorMethod<[string], { 'ok' : null } | { 'err' : string }>,
   'deleteMod' : ActorMethod<[ModId], undefined>,
   'getAllMods' : ActorMethod<[], Array<Mod>>,
+  'getAverageRating' : ActorMethod<[string], number>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCommentsForMod' : ActorMethod<[string], Array<Comment>>,
   'getDownloadInfo' : ActorMethod<
     [ModId],
     { 'mod' : Mod, 'attachments' : Array<ExternalBlob> }
@@ -113,13 +138,26 @@ export interface _SERVICE {
   'getMyModIds' : ActorMethod<[], Array<ModId>>,
   'getPopularGames' : ActorMethod<[], Array<Game>>,
   'getPopularTags' : ActorMethod<[], Array<Tag>>,
+  'getRatingsForMod' : ActorMethod<[string], Array<Rating>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listMyMods' : ActorMethod<[], Array<Mod>>,
   'listPublicMods' : ActorMethod<[], Array<Mod>>,
+  'listUserGames' : ActorMethod<[], Array<UserGame>>,
   'removeModAttachment' : ActorMethod<[ModId, string], undefined>,
+  'removeUserGame' : ActorMethod<[GameId], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'searchMods' : ActorMethod<[string], Array<Mod>>,
+  'submitComment' : ActorMethod<
+    [string, string],
+    { 'ok' : string } |
+      { 'err' : string }
+  >,
+  'submitRating' : ActorMethod<
+    [string, bigint],
+    { 'ok' : null } |
+      { 'err' : string }
+  >,
   'toggleModEnabled' : ActorMethod<[ModId], boolean>,
   'updateMod' : ActorMethod<[ModId, ModUpdate], undefined>,
 }

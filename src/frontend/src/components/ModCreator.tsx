@@ -128,6 +128,16 @@ export default function ModCreator({
   const { data: userGames } = useUserGames();
   const [title, setTitle] = useState(initialMod?.title || "");
   const [game, setGame] = useState(initialMod?.game || "");
+  const [systemTag, setSystemTag] = useState<string>(() => {
+    if (initialMod?.configJson) {
+      try {
+        return JSON.parse(initialMod.configJson).systemTag || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  });
   const [description, setDescription] = useState(initialMod?.description || "");
   const [isPublic, setIsPublic] = useState(initialMod?.isPublic ?? false);
   const [tagInput, setTagInput] = useState("");
@@ -383,6 +393,7 @@ export default function ModCreator({
         tags,
         configJson: JSON.stringify({
           ...config,
+          systemTag: systemTag === "__all__" ? "" : systemTag,
           cultures: cultures.map((c) => ({
             id: c.id,
             name: c.name,
@@ -458,6 +469,32 @@ export default function ModCreator({
               className={inputClass}
               data-ocid="creator.input"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={labelClass}>
+              Platform / System <span className="opacity-50">(Optional)</span>
+            </Label>
+            <Select value={systemTag} onValueChange={setSystemTag}>
+              <SelectTrigger className={inputClass} data-ocid="creator.select">
+                <SelectValue placeholder="All Platforms" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="__all__">All Platforms</SelectItem>
+                {[
+                  "Xbox",
+                  "PlayStation",
+                  "PC",
+                  "Nintendo Switch",
+                  "Android",
+                  "iOS",
+                  "Other",
+                ].map((sys) => (
+                  <SelectItem key={sys} value={sys}>
+                    {sys}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label className={labelClass}>Game *</Label>

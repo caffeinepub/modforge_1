@@ -30,8 +30,9 @@ export default function CreateModPage() {
 
       toast.success("Mod created successfully!");
       router.navigate({ to: "/workshop" });
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to create mod");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to create mod";
+      toast.error(msg);
     }
   };
 
